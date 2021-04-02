@@ -14,7 +14,7 @@ public class Manager : MonoBehaviour
     private readonly List<SeasonGood> goodList = new List<SeasonGood>();//赛季奖励数据
     private Users user;//用户数据
     public ScrollRect scrollRect;//滚动框
-    [Header("固定的Item数量")] public int fixedCount;
+    public RectTransform rectTransform;//滚动栏RectTransform，获取高度用
     [Header("Item的预制体")] public ShowRewards itemPrefab;
     public long userID = 3716954261;
     private RectTransform content; //滑动框的Content
@@ -26,6 +26,7 @@ public class Manager : MonoBehaviour
     private int headIndex; //头下标
     private int tailIndex; //尾下标
     private Vector2 firstItemAnchoredPos; //第一个元素的坐标
+    private int fixedCount; //显示元素数量
 
     private JSONNode rewardsInfo;//读取时用的变量
     private JSONNode userInfo;
@@ -33,6 +34,8 @@ public class Manager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        fixedCount = (int) (rectTransform.rect.size.y / (layout.spacing.y + layout.cellSize.y)) + 2;//计算需要的显示元素数量，减少开销
+        UI.SetActive(false);//关闭排名UI
         StartCoroutine(Init());
     }
 
