@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,10 +12,10 @@ public class Manager : MonoBehaviour
     public GameObject UI;
     public GameObject Button;
     public ShowPlayerInfo PlayerCase; //用户数据显示
-    private readonly List<SeasonGood> goodList = new List<SeasonGood>();//赛季奖励数据
-    private Users user;//用户数据
-    public ScrollRect scrollRect;//滚动框
-    public RectTransform rectTransform;//滚动栏RectTransform，获取高度用
+    private readonly List<SeasonGood> goodList = new List<SeasonGood>(); //赛季奖励数据
+    private Users user; //用户数据
+    public ScrollRect scrollRect; //滚动框
+    public RectTransform rectTransform; //滚动栏RectTransform，获取高度用
     [Header("Item的预制体")] public ShowRewards itemPrefab;
     public long userID = 3716954261;
     private RectTransform content; //滑动框的Content
@@ -28,16 +29,9 @@ public class Manager : MonoBehaviour
     private Vector2 firstItemAnchoredPos; //第一个元素的坐标
     private int fixedCount; //显示元素数量
 
-    private JSONNode rewardsInfo;//读取时用的变量
+    private JSONNode rewardsInfo; //读取时用的变量
     private JSONNode userInfo;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        fixedCount = (int) (rectTransform.rect.size.y / (layout.spacing.y + layout.cellSize.y)) + 2;//计算需要的显示元素数量，减少开销
-        UI.SetActive(false);//关闭排名UI
-        StartCoroutine(Init());
-    }
+    private bool initTrigger = true; //第一次按按钮初始化，之后不用
 
     /// <summary>
     /// 滚动时设置元素位置
@@ -95,7 +89,7 @@ public class Manager : MonoBehaviour
             SetRewardInfo(tempItem, i);
         }
     }
-    
+
     /// <summary>
     /// 重置奖励列表内容，复用元素
     /// </summary>
@@ -167,12 +161,15 @@ public class Manager : MonoBehaviour
     }
 
     /// <summary>
-    /// 开始按键
+    /// 领取奖励按键
     /// </summary>
-    public void ToUI() 
+    public void ToUI()
     {
         UI.SetActive(true);
         Button.SetActive(false);
+        if (!initTrigger) return;
+        StartCoroutine(Init());
+        initTrigger = !initTrigger;
     }
 
     /// <summary>
@@ -190,7 +187,7 @@ public class Manager : MonoBehaviour
     /// 加分按键
     /// </summary>
     public void AddScore()
-    { 
+    {
         user.Score += 100;
         if (user.Score > 6000) user.Score = 6000;
         PlayerCase.ShowUserInfo(this.user);
@@ -257,6 +254,8 @@ public class Manager : MonoBehaviour
         ReadPlayerInfo();
         ReadSeasonInfo();
         totalCount = goodList.Count;
+        fixedCount = Mathf.Min((int) (rectTransform.rect.size.y / (layout.spacing.y + layout.cellSize.y)) + 2,
+            totalCount); //计算需要的显示元素数量，减少开销
         content = scrollRect.content;
         scrollRect.onValueChanged.AddListener(v => OnScroll());
         //设置头下标和尾下标
@@ -279,7 +278,7 @@ public class Manager : MonoBehaviour
     /// <summary>
     /// 新赛季按钮事件，重新读取奖励信息，调整分数和已领取奖励列表
     /// </summary>
-    public void SetNewSeason()//新赛季
+    public void SetNewSeason() //新赛季
     {
         ReadSeasonInfo();
         if (user.Score > 4000) user.Score = (user.Score - 4000) / 2 + 4000;
